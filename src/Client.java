@@ -51,17 +51,18 @@ class Server extends Thread {
             e.printStackTrace();
         }
         story = new Story();
-        System.out.println("Server Started");
+        System.out.println("Server started!");
         Scanner in = new Scanner(System.in);
         try{
             while (true){
-// Блокируется до возникновения нового соединения:
+                // Блокируется до возникновения нового соединения:
                 Socket socket = server.accept();
                 try {
-                    serverList.add(new ServerSomething(socket)); // добавить новое соединенние в список
+                    serverList.add(new ServerSomething(socket)); // добавить новое соединение в список
+                    story.printStory(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
                 } catch (IOException e){
-// Если завершится неудачей, закрывается сокет,
-// в противном случае, нить закроет его при завершении работы:
+                    // Если завершится неудачей, закрывается сокет,
+                    // в противном случае, нить закроет его при завершении работы:
                     socket.close();
                 }
             }
@@ -92,7 +93,7 @@ class ClientSomething {
     public ClientSomething(String addr, int port){
         this.addr = addr;
         this.port = port;
-        try{
+        try {
             this.socket = new Socket(addr, port);
         } catch (IOException e){
             System.out.println("Socket failed");
@@ -101,7 +102,7 @@ class ClientSomething {
             inputUser = new BufferedReader(new InputStreamReader(System.in));
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            this.pressNickname(); // перед началом необходимо спросить имя
+            this.enterNickname(); // перед началом необходимо спросить имя
             new ReadMsg().start(); // нить читающая сообщения из сокета в бесконечном цикле
             new WriteMsg().start(); // нить пишущая сообщения в сокет приходящие с консоли в бесконечном цикле
         } catch (IOException e) {
@@ -112,13 +113,13 @@ class ClientSomething {
         // В противном случае сокет будет закрыт
         // в методе run() нити.
     }
-    public void pressNickname(){
-        System.out.println("Press your nick: ");
-        try{
+    public void enterNickname(){
+        System.out.println("Enter your nickname: ");
+        try {
             nickname = inputUser.readLine();
-            out.write("Hello " + nickname + "\n");
+            out.write("You were connected to server with next nickname:  " + nickname + "\n");
             out.flush(); //Выталкиваем содержимое буфера
-        }catch (IOException ignored){}
+        } catch (IOException ignored){}
     }
 
     private void downService(){
@@ -145,7 +146,7 @@ class ClientSomething {
                     }
                     System.out.println(str); // пишем сообщение с сервера на консоль
                 }
-            } catch (IOException e){
+            } catch (IOException e) {
                 ClientSomething.this.downService();
             }
         }
@@ -155,11 +156,10 @@ class ClientSomething {
     public class WriteMsg extends Thread{
 
         @Override
-        public void run(){
-            while (true){
+        public void run() {
+            while (true) {
                 String userWord;
-
-                try{
+                try {
                     time = new Date(); //текущая дата
                     dt1 = new SimpleDateFormat("HH:mm:ss"); // берем только время до секунд
                     dtime = dt1.format(time); //время
@@ -169,10 +169,10 @@ class ClientSomething {
                         ClientSomething.this.downService();
                         break;
                     } else {
-                        out.write("(" + dtime + ") " + nickname + ": " + userWord + "\n"); // отправляем на сервер
+                        out.write(dtime + " " + nickname + ": " + userWord + "\n"); // отправляем на сервер
                     }
                     out.flush();
-                }catch (IOException e){
+                } catch (IOException e){
                     ClientSomething.this.downService();
                 }
             }
@@ -206,7 +206,7 @@ class ServerSomething extends Thread {
                 // если такие есть, и очистки потока для дальнейших нужд
             }catch (IOException ignored){}
             try{
-                while (true){
+                while (true) {
                     word = in.readLine();
                     if (word.equals("stop")){
                         this.downService();
@@ -218,7 +218,7 @@ class ServerSomething extends Thread {
                         serv.send(word); // отослать принятое сообщение с привязанного клиента всем остальным включая его
                     }
                 }
-            }catch (NullPointerException ignored) {
+            } catch (NullPointerException ignored) {
 
             }
         }catch (IOException e){
@@ -226,16 +226,16 @@ class ServerSomething extends Thread {
         }
     }
 
-    private void send(String msg){
-        try{
+    private void send (String msg) {
+        try {
             out.write(msg + "\n");
             out.flush();
         } catch (IOException ignored) {}
     }
 
-    private void downService(){
-        try{
-            if (!socket.isClosed()){
+    private void downService() {
+        try {
+            if (!socket.isClosed()) {
                 socket.close();
                 in.close();
                 out.close();
@@ -244,7 +244,7 @@ class ServerSomething extends Thread {
                     Server.serverList.remove(this);
                 }
             }
-        }catch (IOException ignored){}
+        } catch (IOException ignored){}
     }
 }
 
@@ -265,7 +265,7 @@ class Story {
 
     public void printStory(BufferedWriter writer){
         if (story.size() > 0) {
-            try{
+            try {
                 writer.write("History messages" + "\n");
                 for (String vr: story) {
                     writer.write(vr + "\n");
